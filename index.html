@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>娃娃屋 - 大廳</title>
+  <style>
+    * { box-sizing: border-box; user-select: none; touch-action: none; }
+    body { margin: 0; overflow: hidden; background-color: #222; }
+    canvas { display: block; width: 100vw; height: 100vh; }
+    
+    #hud {
+      position: absolute; top: 15px; left: 15px;
+      color: #fff; font-size: 24px; font-weight: bold;
+      background: rgba(0, 0, 0, 0.6); padding: 10px 20px;
+      border-radius: 20px; z-index: 100;
+    }
+  </style>
+</head>
+<body>
+  <div id="hud">存款: <span id="coinDisplay">0</span> 💰</div>
+  <canvas id="lobbyCanvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById('lobbyCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // 將原本的 2000x1500 改小，適合平板一屏或微滑動
+const MAP_WIDTH = 1200;
+const MAP_HEIGHT = 800;
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // 讀取金幣與角色
+    document.getElementById('coinDisplay').innerText = localStorage.getItem('playerCoins') || '0';
+    let equippedCharKey = localStorage.getItem('equippedCharacter') || 'han1';
+    
+    // 預載角色行走圖 (大廳只需要 hanX-1.webp 和 hanX-2.webp 來做走路動畫)
+    const playerImg = new Image();
+    playerImg.src = `assets/han/${equippedCharKey}-1.webp`;
+
+    const player = {
+      x: MAP_WIDTH / 2, y: MAP_HEIGHT / 2, // 初始在房間正中央
+      size: 160, speed: 600,
+      targetX: MAP_WIDTH / 2, targetY: MAP_HEIGHT / 2,
+      isMoving: false, isFacingLeft: false, walkCycle: 0
+    };
+
+    // 將觸發區域往中央靠攏
+const zones = [
+  { id: 'wardrobe', x: 100, y: 300, w: 200, h: 200, color: '#9c27b0', label: '👗 去換衣服' },
+  { id: 'map1', x: 900, y: 300, w: 200, h: 200, color: '#f44336', label: '⚔️ 去打怪' }
+];
+
+    let lastTime = performance.now();
+    function gameLoop(currentTime) {
+      const dt = (currentTime - lastTime) / 1000;
+      lastTime = currentTime;
+      update(Math.min(dt, 0.1));
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    function update(dt) {
+      if (player.isMoving) {
+        let dx = player.targetX - player.x;
+        let dy = player.targetY - player.y;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+        let moveDist = player.speed * dt;
+
+        if (distance > moveDist) {
+          player.x += (dx / distance) * moveDist;
+          player.y += (dy / distance) * moveDist;
+          player.walkCycle += 20 * dt;
+        } else {
+          // 到達目標
+          player.x = player.targetX;
+          player.y = player.targetY;
+          player.isMoving = false;
+          player.walkCycle = 0;
+          checkZones(); // 檢查有沒有走到觸發區
+        }
+      }
+    }
+
+    function checkZones() {
+      for (let z of zones) {
+        // 判斷玩家中心點是否在該方形區域內
+        if (player.x > z.x && player.x < z.x + z.w && player.y > z.y && player.y < z.y + z.h) {
+          if (z.id === 'wardrobe') window.location.href = 'wardrobe.html';
+          if (z.id === 'map1') window.location.href = 'map1.html';
+        }
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // --- 核心：鏡頭跟隨系統 ---
+      // 計算鏡頭位置，讓玩家保持在畫面中間
+      let cameraX = player.x - canvas.width / 2;
+      let cameraY = player.y - canvas.height / 2;
+      
+      // 限制鏡頭不能超出大地圖邊界
+      cameraX = Math.max(0, Math.min(cameraX, MAP_WIDTH - canvas.width));
+      cameraY = Math.max(0, Math.min(cameraY, MAP_HEIGHT - canvas.height));
+
+      ctx.save();
+      ctx.translate(-cameraX, -cameraY); // 移動整個畫布，產生鏡頭移動的效果
+
+      // 1. 畫背景格線 (幫助您在純黑底時看出有在移動)
+      ctx.strokeStyle = '#333';
+      for(let i=0; i<MAP_WIDTH; i+=100) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,MAP_HEIGHT); ctx.stroke(); }
+      for(let i=0; i<MAP_HEIGHT; i+=100) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(MAP_WIDTH,i); ctx.stroke(); }
+
+      // --- 畫兒童引導虛線 (順著虛線走) ---
+ctx.save();
+ctx.lineWidth = 8;
+ctx.setLineDash([20, 20]); // 設定虛線樣式 (長度20, 間距20)
+
+// 畫往衣櫃的粉紅虛線
+ctx.strokeStyle = '#ff69b4'; // 粉紅色
+ctx.beginPath();
+ctx.moveTo(MAP_WIDTH / 2, MAP_HEIGHT / 2); // 從中央出發
+ctx.lineTo(zones[0].x + zones[0].w / 2, zones[0].y + zones[0].h / 2); // 連到衣櫃中心
+ctx.stroke();
+
+// 畫往關卡的黃色虛線
+ctx.strokeStyle = '#ffeb3b'; // 黃色
+ctx.beginPath();
+ctx.moveTo(MAP_WIDTH / 2, MAP_HEIGHT / 2); // 從中央出發
+ctx.lineTo(zones[1].x + zones[1].w / 2, zones[1].y + zones[1].h / 2); // 連到關卡中心
+ctx.stroke();
+
+ctx.restore();
+
+      // 2. 畫觸發區域
+      for (let z of zones) {
+        ctx.fillStyle = z.color;
+        ctx.fillRect(z.x, z.y, z.w, z.h);
+        ctx.fillStyle = '#fff';
+        ctx.font = '24px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(z.label, z.x + z.w/2, z.y - 20);
+      }
+
+      // 3. 畫玩家
+      ctx.save();
+      let offsetY = player.isMoving ? Math.sin(player.walkCycle * 2) * 5 : 0;
+      let rotationAngle = player.isMoving ? Math.sin(player.walkCycle) * 0.15 : 0;
+      
+      ctx.translate(player.x, player.y + offsetY);
+      ctx.rotate(rotationAngle);
+      
+      if (player.isFacingLeft) ctx.scale(-1, 1);
+      if (playerImg.complete) {
+        ctx.drawImage(playerImg, -player.size/2, -player.size/2, player.size, player.size);
+      } else {
+        ctx.fillStyle = 'pink'; // 圖片還沒載入時的佔位方塊
+        ctx.fillRect(-player.size/2, -player.size/2, player.size, player.size);
+      }
+      ctx.restore();
+
+      ctx.restore(); // 結束鏡頭跟隨
+    }
+
+    canvas.addEventListener('pointerdown', (e) => {
+      // 因為鏡頭移動了，所以點擊的螢幕座標必須加上 camera 的偏移量才是地圖上的真實座標
+      let cameraX = Math.max(0, Math.min(player.x - canvas.width / 2, MAP_WIDTH - canvas.width));
+      let cameraY = Math.max(0, Math.min(player.y - canvas.height / 2, MAP_HEIGHT - canvas.height));
+      
+      let clickX = e.clientX + cameraX;
+      let clickY = e.clientY + cameraY;
+
+      player.isFacingLeft = clickX < player.x;
+      player.targetX = clickX;
+      player.targetY = clickY;
+      player.isMoving = true;
+    });
+
+    requestAnimationFrame(gameLoop);
+  </script>
+</body>
+</html>
