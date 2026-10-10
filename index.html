@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
-<head>
+<head> 
+  <link rel="apple-touch-icon" href="assets/icon.png">
+ <link rel="manifest" href="manifest.json">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>娃娃屋 - 大廳</title>
@@ -51,11 +53,17 @@ const MAP_HEIGHT = 800;
       isMoving: false, isFacingLeft: false, walkCycle: 0
     };
 
-    // 將觸發區域往中央靠攏
-const zones = [
-  { id: 'wardrobe', x: 100, y: 300, w: 200, h: 200, color: '#9c27b0', label: '👗 去換衣服' },
-  { id: 'map1', x: 900, y: 300, w: 200, h: 200, color: '#f44336', label: '⚔️ 去打怪' }
-];
+    // 1. 將觸發區域往中央靠攏，並改為符合 900x1200 比例的寬高 (150x200)
+    const zones = [
+      { id: 'wardrobe', x: 100, y: 300, w: 150, h: 200, color: '#9c27b0', label: '👗 去換衣服', imgSrc: 'assets/wardrobe/wardrobe.webp' },
+      { id: 'map1', x: 900, y: 300, w: 150, h: 200, color: '#f44336', label: '⚔️ 去打怪', imgSrc: 'assets/map/map1.webp' }
+    ];
+
+    // 2. 預載區域圖片 (新增這段)
+    for (let z of zones) {
+      z.img = new Image();
+      z.img.src = z.imgSrc;
+    }
 
     let lastTime = performance.now();
     function gameLoop(currentTime) {
@@ -141,8 +149,17 @@ ctx.restore();
 
       // 2. 畫觸發區域
       for (let z of zones) {
-        ctx.fillStyle = z.color;
-        ctx.fillRect(z.x, z.y, z.w, z.h);
+        // 判斷圖片是否已經載入成功
+        if (z.img && z.img.complete) {
+          // 畫出圖片 (自動縮放到我們設定的 150x200)
+          ctx.drawImage(z.img, z.x, z.y, z.w, z.h);
+        } else {
+          // 圖片載入前的備用色塊
+          ctx.fillStyle = z.color;
+          ctx.fillRect(z.x, z.y, z.w, z.h);
+        }
+        
+        // 畫圖片上方的文字標籤 (x 座標加上 z.w/2 讓文字置中)
         ctx.fillStyle = '#fff';
         ctx.font = '24px sans-serif';
         ctx.textAlign = 'center';
