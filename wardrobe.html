@@ -8,9 +8,8 @@
     * { box-sizing: border-box; user-select: none; }
     body {
       margin: 0; padding: 20px;
-      /* 加入背景圖片設定 */
       background: #1a1a2e url("assets/wardrobe/wardrobe.webp") no-repeat center center;
-      background-size: cover; /* 讓背景圖完整填滿螢幕 */
+      background-size: cover; 
       color: #fff;
       font-family: -apple-system, BlinkMacSystemFont, sans-serif;
       display: flex; flex-direction: column; align-items: center; height: 100vh;
@@ -25,17 +24,16 @@
     }
     .coin-display { font-size: 24px; font-weight: bold; color: #ffeb3b; background: rgba(0,0,0,0.5); padding: 8px 16px; border-radius: 15px;}
     
-    /* 橫向滑動區 */
     .scroll-container {
       display: flex; gap: 20px; width: 100%; max-width: 800px; padding: 20px 0;
       overflow-x: auto; scroll-snap-type: x mandatory;
     }
-    .scroll-container::-webkit-scrollbar { display: none; } /* 隱藏卷軸 */
+    .scroll-container::-webkit-scrollbar { display: none; }
     
     .char-card {
       scroll-snap-align: center; flex: 0 0 auto;
-      background: rgba(22, 33, 62, 0.85); /* 稍微帶點透明度，能透出後方背景 */
-      backdrop-filter: blur(5px); /* 毛玻璃模糊效果 */
+      background: rgba(22, 33, 62, 0.85);
+      backdrop-filter: blur(5px);
       border: 3px solid #0f3460; border-radius: 20px;
       padding: 20px; text-align: center; width: 220px;
       display: flex; flex-direction: column; align-items: center;
@@ -57,13 +55,12 @@
 
   <div class="top-bar">
     <button class="btn-back" onclick="location.href='index.html'">🔙 回客廳</button>
-    <div class="coin-display">擁有: <span id="myCoins">0</span> 💰</div>
+    <div class="coin-display">擁有: <span id="myCoins">0</span> ⭐</div>
   </div>
 
   <div class="scroll-container">
     <!-- 角色 1 -->
     <div class="char-card" id="card-han1">
-      <!-- 改這裡：加上 assets/han/ -->
       <img src="assets/han/han1-1.webp" alt="揮劍女孩">
       <div class="char-name">揮劍女孩</div>
       <button class="btn btn-equip" id="btn-han1" onclick="equipChar('han1')">換上</button>
@@ -71,26 +68,24 @@
 
     <!-- 角色 2 -->
     <div class="char-card" id="card-han2">
-      <!-- 改這裡：加上 assets/han/ -->
       <img src="assets/han/han2-1.webp" alt="弓箭公主">
       <div class="char-name">弓箭公主</div>
-      <button class="btn btn-buy" id="btn-han2" onclick="buyOrEquip('han2', 50)">購買 (50💰)</button>
+      <button class="btn btn-buy" id="btn-han2" onclick="buyOrEquip('han2', 50)">購買 (50⭐)</button>
     </div>
-  </div>
     
-    <!-- 未來角色 3 預留區 
+    <!-- 角色 3：魔法仙子 -->
     <div class="char-card" id="card-han3">
-      <img src="han3-1.webp" alt="魔法精靈">
-      <div class="char-name">魔法精靈</div>
-      <button class="btn btn-buy" id="btn-han3" onclick="buyOrEquip('han3', 100)">購買 (100💰)</button>
+      <img src="assets/han/han3-1.webp" alt="魔法仙子">
+      <div class="char-name">魔法仙子</div>
+      <button class="btn btn-buy" id="btn-han3" onclick="buyOrEquip('han3', 100)">購買 (100⭐)</button>
     </div>
-    -->
   </div>
 
   <script>
     let coins = parseInt(localStorage.getItem('playerCoins') || '0');
     let equipped = localStorage.getItem('equippedCharacter') || 'han1';
     let ownsHan2 = localStorage.getItem('owns_han2') === 'true';
+    let ownsHan3 = localStorage.getItem('owns_han3') === 'true';
 
     document.getElementById('myCoins').innerText = coins;
 
@@ -110,8 +105,22 @@
         btn2.style.backgroundColor = equipped === 'han2' ? '#4caf50' : '#2196f3';
       } else {
         card2.className = 'char-card';
-        btn2.innerText = '購買 (50💰)';
+        btn2.innerText = '購買 (50⭐)';
         btn2.className = 'btn btn-buy';
+      }
+
+      // 處理 han3 UI
+      const card3 = document.getElementById('card-han3');
+      const btn3 = document.getElementById('btn-han3');
+      if (ownsHan3) {
+        card3.className = equipped === 'han3' ? 'char-card equipped' : 'char-card';
+        btn3.innerText = equipped === 'han3' ? '已穿著 ✔️' : '換上';
+        btn3.className = 'btn btn-equip';
+        btn3.style.backgroundColor = equipped === 'han3' ? '#4caf50' : '#2196f3';
+      } else {
+        card3.className = 'char-card';
+        btn3.innerText = '購買 (100⭐)';
+        btn3.className = 'btn btn-buy';
       }
     }
 
@@ -134,12 +143,13 @@
           localStorage.setItem(ownsProp, 'true');
           
           if(charKey === 'han2') ownsHan2 = true;
+          if(charKey === 'han3') ownsHan3 = true;
           
           document.getElementById('myCoins').innerText = coins;
           equipChar(charKey);
           alert("耶！買到新衣服了！");
         } else {
-          alert(`金幣不夠喔！還差 ${cost - coins} 💰，快去打怪賺錢吧！`);
+          alert(`星星不夠喔！還差 ${cost - coins} ⭐，快去打怪賺⭐吧！`);
         }
       }
     }

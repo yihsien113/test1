@@ -2,13 +2,13 @@
 <html lang="zh-TW">
 <head> 
   <link rel="apple-touch-icon" href="assets/icon.png">
- <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="manifest.json">
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>娃娃屋 - 大廳</title>
   <style>
     * { box-sizing: border-box; user-select: none; touch-action: none; }
-    body { margin: 0; overflow: hidden; background-color: #222; }
+    body { margin: 0; overflow: hidden; background-color: #000; /* 背景改全黑 */ }
     canvas { display: block; width: 100vw; height: 100vh; }
     
     #hud {
@@ -20,46 +20,79 @@
   </style>
 </head>
 <body>
-  <div id="hud">存款: <span id="coinDisplay">0</span> 💰</div>
+  <div id="hud">存款: <span id="coinDisplay">0</span> ⭐</div>
   <canvas id="lobbyCanvas"></canvas>
 
   <script>
     const canvas = document.getElementById('lobbyCanvas');
     const ctx = canvas.getContext('2d');
     
-    // 將原本的 2000x1500 改小，適合平板一屏或微滑動
-const MAP_WIDTH = 1200;
-const MAP_HEIGHT = 800;
+    const MAP_WIDTH = 3000;
+    const MAP_HEIGHT = 4000;
+
+    let scale = 1.0;
+    let minScale = 1.0; 
+    let cameraX = 0;
+    let cameraY = 0;
+
+    function clampCamera() {
+      let viewW = canvas.width / scale;
+      let viewH = canvas.height / scale;
+
+      if (viewW > MAP_WIDTH) {
+        cameraX = -(viewW - MAP_WIDTH) / 2;
+      } else {
+        cameraX = Math.max(0, Math.min(cameraX, MAP_WIDTH - viewW));
+      }
+
+      if (viewH > MAP_HEIGHT) {
+        cameraY = -(viewH - MAP_HEIGHT) / 2;
+      } else {
+        cameraY = Math.max(0, Math.min(cameraY, MAP_HEIGHT - viewH));
+      }
+    }
 
     function resize() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      
+      minScale = canvas.width / (MAP_WIDTH / 2);
+      
+      if (scale < minScale) {
+        scale = minScale;
+      }
+      clampCamera();
     }
     window.addEventListener('resize', resize);
-    resize();
 
-    // 讀取金幣與角色
     document.getElementById('coinDisplay').innerText = localStorage.getItem('playerCoins') || '0';
     let equippedCharKey = localStorage.getItem('equippedCharacter') || 'han1';
     
-    // 預載角色行走圖 (大廳只需要 hanX-1.webp 和 hanX-2.webp 來做走路動畫)
+    // --- 1. 在這裡載入大廳底圖 ---
+    const bgImg = new Image();
+    bgImg.src = 'assets/lobby/lobby.webp';
+
     const playerImg = new Image();
     playerImg.src = `assets/han/${equippedCharKey}-1.webp`;
 
     const player = {
-      x: MAP_WIDTH / 2, y: MAP_HEIGHT / 2, // 初始在房間正中央
+      x: 943, y: 1051, 
       size: 160, speed: 600,
-      targetX: MAP_WIDTH / 2, targetY: MAP_HEIGHT / 2,
+      targetX: 400, targetY: 450,
       isMoving: false, isFacingLeft: false, walkCycle: 0
     };
 
-    // 1. 將觸發區域往中央靠攏，並改為符合 900x1200 比例的寬高 (150x200)
+    resize();
+    cameraX = player.x - (canvas.width / scale) / 2;
+    cameraY = player.y - (canvas.height / scale) / 2;
+    clampCamera();
+
     const zones = [
-      { id: 'wardrobe', x: 100, y: 300, w: 150, h: 200, color: '#9c27b0', label: '👗 去換衣服', imgSrc: 'assets/wardrobe/wardrobe.webp' },
-      { id: 'map1', x: 900, y: 300, w: 150, h: 200, color: '#f44336', label: '⚔️ 去打怪', imgSrc: 'assets/map/map1.webp' }
+      { id: 'wardrobe', x: 400, y: 958, w: 225, h: 300, color: '#9c27b0', imgSrc: 'assets/wardrobe/wardrobe.webp' },
+      { id: 'map1', x: 1300, y: 1221, w: 225, h: 300, color: '#f44336', imgSrc: 'assets/map/map1.webp' },
+      { id: 'map2', x: 1614, y: 1591, w: 225, h: 300, color: '#4caf50', imgSrc: 'assets/map/map2.webp' }
     ];
 
-    // 2. 預載區域圖片 (新增這段)
     for (let z of zones) {
       z.img = new Image();
       z.img.src = z.imgSrc;
@@ -70,7 +103,7 @@ const MAP_HEIGHT = 800;
       const dt = (currentTime - lastTime) / 1000;
       lastTime = currentTime;
       update(Math.min(dt, 0.1));
-      draw();
+      draw(currentTime); 
       requestAnimationFrame(gameLoop);
     }
 
@@ -86,119 +119,269 @@ const MAP_HEIGHT = 800;
           player.y += (dy / distance) * moveDist;
           player.walkCycle += 20 * dt;
         } else {
-          // 到達目標
           player.x = player.targetX;
           player.y = player.targetY;
           player.isMoving = false;
           player.walkCycle = 0;
-          checkZones(); // 檢查有沒有走到觸發區
+          checkZones();
         }
       }
     }
 
     function checkZones() {
       for (let z of zones) {
-        // 判斷玩家中心點是否在該方形區域內
         if (player.x > z.x && player.x < z.x + z.w && player.y > z.y && player.y < z.y + z.h) {
           if (z.id === 'wardrobe') window.location.href = 'wardrobe.html';
           if (z.id === 'map1') window.location.href = 'map1.html';
+          if (z.id === 'map2') window.location.href = 'map2.html';
         }
       }
     }
 
-    function draw() {
+    function draw(time) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // --- 核心：鏡頭跟隨系統 ---
-      // 計算鏡頭位置，讓玩家保持在畫面中間
-      let cameraX = player.x - canvas.width / 2;
-      let cameraY = player.y - canvas.height / 2;
-      
-      // 限制鏡頭不能超出大地圖邊界
-      cameraX = Math.max(0, Math.min(cameraX, MAP_WIDTH - canvas.width));
-      cameraY = Math.max(0, Math.min(cameraY, MAP_HEIGHT - canvas.height));
-
       ctx.save();
-      ctx.translate(-cameraX, -cameraY); // 移動整個畫布，產生鏡頭移動的效果
+      ctx.scale(scale, scale);
+      ctx.translate(-cameraX, -cameraY);
 
-      // 1. 畫背景格線 (幫助您在純黑底時看出有在移動)
-      ctx.strokeStyle = '#333';
-      for(let i=0; i<MAP_WIDTH; i+=100) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,MAP_HEIGHT); ctx.stroke(); }
-      for(let i=0; i<MAP_HEIGHT; i+=100) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(MAP_WIDTH,i); ctx.stroke(); }
-
-      // --- 畫兒童引導虛線 (順著虛線走) ---
-ctx.save();
-ctx.lineWidth = 8;
-ctx.setLineDash([20, 20]); // 設定虛線樣式 (長度20, 間距20)
-
-// 畫往衣櫃的粉紅虛線
-ctx.strokeStyle = '#ff69b4'; // 粉紅色
-ctx.beginPath();
-ctx.moveTo(MAP_WIDTH / 2, MAP_HEIGHT / 2); // 從中央出發
-ctx.lineTo(zones[0].x + zones[0].w / 2, zones[0].y + zones[0].h / 2); // 連到衣櫃中心
-ctx.stroke();
-
-// 畫往關卡的黃色虛線
-ctx.strokeStyle = '#ffeb3b'; // 黃色
-ctx.beginPath();
-ctx.moveTo(MAP_WIDTH / 2, MAP_HEIGHT / 2); // 從中央出發
-ctx.lineTo(zones[1].x + zones[1].w / 2, zones[1].y + zones[1].h / 2); // 連到關卡中心
-ctx.stroke();
-
-ctx.restore();
-
-      // 2. 畫觸發區域
-      for (let z of zones) {
-        // 判斷圖片是否已經載入成功
-        if (z.img && z.img.complete) {
-          // 畫出圖片 (自動縮放到我們設定的 150x200)
-          ctx.drawImage(z.img, z.x, z.y, z.w, z.h);
-        } else {
-          // 圖片載入前的備用色塊
-          ctx.fillStyle = z.color;
-          ctx.fillRect(z.x, z.y, z.w, z.h);
-        }
-        
-        // 畫圖片上方的文字標籤 (x 座標加上 z.w/2 讓文字置中)
-        ctx.fillStyle = '#fff';
-        ctx.font = '24px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(z.label, z.x + z.w/2, z.y - 20);
+      // --- 2. 在所有東西的最底層畫上背景圖 ---
+      if (bgImg.complete) {
+        ctx.drawImage(bgImg, 0, 0, MAP_WIDTH, MAP_HEIGHT);
+      } else {
+        // 圖片還沒載入好的過渡底色
+        ctx.fillStyle = '#222';
+        ctx.fillRect(0, 0, MAP_WIDTH, MAP_HEIGHT);
       }
 
-      // 3. 畫玩家
+      // (註解掉格線) 有底圖後就不需要黑底格線了
+      /* 
+      ctx.strokeStyle = '#333';
+      ctx.lineWidth = 1;
+      for(let i=0; i<=MAP_WIDTH; i+=100) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,MAP_HEIGHT); ctx.stroke(); }
+      for(let i=0; i<=MAP_HEIGHT; i+=100) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(MAP_WIDTH,i); ctx.stroke(); }
+      */
+
+      for (let z of zones) {
+        // 彩虹旋轉傳送門邊框
+        ctx.save();
+        let cx = z.x + z.w / 2; 
+        let cy = z.y + z.h / 2; 
+        
+        let portalAngle = (time / 800) * Math.PI * 2; 
+
+        if (ctx.createConicGradient) {
+          let grad = ctx.createConicGradient(portalAngle, cx, cy);
+          grad.addColorStop(0, "#ff0000"); 
+          grad.addColorStop(0.15, "#ff7f00"); 
+          grad.addColorStop(0.33, "#ffff00"); 
+          grad.addColorStop(0.5, "#00ff00"); 
+          grad.addColorStop(0.66, "#0000ff"); 
+          grad.addColorStop(0.83, "#ff00ff"); 
+          grad.addColorStop(1, "#ff0000"); 
+          ctx.strokeStyle = grad;
+        } else {
+          ctx.strokeStyle = '#00ffff'; 
+        }
+
+        ctx.shadowColor = 'rgba(255, 255, 255, 0.8)'; 
+        ctx.shadowBlur = 20;
+        ctx.lineWidth = 12; 
+        ctx.lineJoin = 'round'; 
+        
+        ctx.strokeRect(z.x - 6, z.y - 6, z.w + 12, z.h + 12); 
+        ctx.restore();
+
+        if (z.img && z.img.complete) {
+          ctx.drawImage(z.img, z.x, z.y, z.w, z.h);
+        } else {
+          ctx.fillStyle = z.color; ctx.fillRect(z.x, z.y, z.w, z.h);
+        }
+      }
+
+      // 畫玩家
       ctx.save();
       let offsetY = player.isMoving ? Math.sin(player.walkCycle * 2) * 5 : 0;
       let rotationAngle = player.isMoving ? Math.sin(player.walkCycle) * 0.15 : 0;
-      
       ctx.translate(player.x, player.y + offsetY);
       ctx.rotate(rotationAngle);
-      
       if (player.isFacingLeft) ctx.scale(-1, 1);
+      
       if (playerImg.complete) {
         ctx.drawImage(playerImg, -player.size/2, -player.size/2, player.size, player.size);
       } else {
-        ctx.fillStyle = 'pink'; // 圖片還沒載入時的佔位方塊
+        ctx.fillStyle = 'pink';
         ctx.fillRect(-player.size/2, -player.size/2, player.size, player.size);
       }
       ctx.restore();
 
-      ctx.restore(); // 結束鏡頭跟隨
+      ctx.restore(); 
+      drawOffscreenPointer();
     }
 
-    canvas.addEventListener('pointerdown', (e) => {
-      // 因為鏡頭移動了，所以點擊的螢幕座標必須加上 camera 的偏移量才是地圖上的真實座標
-      let cameraX = Math.max(0, Math.min(player.x - canvas.width / 2, MAP_WIDTH - canvas.width));
-      let cameraY = Math.max(0, Math.min(player.y - canvas.height / 2, MAP_HEIGHT - canvas.height));
-      
-      let clickX = e.clientX + cameraX;
-      let clickY = e.clientY + cameraY;
+    function drawOffscreenPointer() {
+      let pxScreen = (player.x - cameraX) * scale;
+      let pyScreen = (player.y - cameraY) * scale;
+      let margin = 40;
+      let isOffscreen = (
+        pxScreen < margin || pxScreen > canvas.width - margin ||
+        pyScreen < margin || pyScreen > canvas.height - margin
+      );
 
-      player.isFacingLeft = clickX < player.x;
-      player.targetX = clickX;
-      player.targetY = clickY;
-      player.isMoving = true;
+      if (isOffscreen) {
+        let cx = canvas.width / 2;
+        let cy = canvas.height / 2;
+        let angle = Math.atan2(pyScreen - cy, pxScreen - cx);
+        let arrowX = Math.max(margin, Math.min(canvas.width - margin, pxScreen));
+        let arrowY = Math.max(margin, Math.min(canvas.height - margin, pyScreen));
+
+        ctx.save();
+        ctx.translate(arrowX, arrowY);
+        ctx.rotate(angle);
+        
+        ctx.fillStyle = '#ffeb3b'; 
+        ctx.strokeStyle = '#ff5722'; 
+        ctx.lineWidth = 3;
+        ctx.shadowColor = "rgba(0,0,0,0.5)";
+        ctx.shadowBlur = 10;
+        
+        ctx.beginPath();
+        ctx.moveTo(25, 0);       
+        ctx.lineTo(-20, 20);     
+        ctx.lineTo(-10, 0);      
+        ctx.lineTo(-20, -20);    
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        
+        ctx.restore();
+      }
+    }
+
+    const activePointers = new Map();
+    let isPointerDown = false; 
+    let isDragActive = false;  
+    let hasMoved = false;
+    let dragStart = { x: 0, y: 0 };
+    let camStart = { x: 0, y: 0 };
+    let initialPinchDist = null;
+    let initialScale = 1;
+    let pinchCenter = { x: 0, y: 0 };
+
+    canvas.addEventListener('pointerdown', (e) => {
+      canvas.setPointerCapture(e.pointerId);
+      activePointers.set(e.pointerId, e);
+
+      if (activePointers.size === 1) {
+        isPointerDown = true;
+        isDragActive = false; 
+        hasMoved = false;
+        dragStart = { x: e.clientX, y: e.clientY };
+        camStart = { x: cameraX, y: cameraY };
+      } else if (activePointers.size === 2) {
+        isPointerDown = false;
+        isDragActive = false;
+        hasMoved = true; 
+        let pts = Array.from(activePointers.values());
+        initialPinchDist = Math.hypot(pts[0].clientX - pts[1].clientX, pts[0].clientY - pts[1].clientY);
+        initialScale = scale;
+        pinchCenter = {
+          x: (pts[0].clientX + pts[1].clientX) / 2,
+          y: (pts[0].clientY + pts[1].clientY) / 2
+        };
+      }
     });
+
+    canvas.addEventListener('pointermove', (e) => {
+      if (!activePointers.has(e.pointerId)) return;
+      activePointers.set(e.pointerId, e);
+
+      if (activePointers.size === 1 && isPointerDown) {
+        let dx = e.clientX - dragStart.x;
+        let dy = e.clientY - dragStart.y;
+        
+        if (!isDragActive) {
+          if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+            isDragActive = true;
+            hasMoved = true;
+            dragStart = { x: e.clientX, y: e.clientY };
+            camStart = { x: cameraX, y: cameraY };
+          }
+        }
+        
+        if (isDragActive) {
+          cameraX = camStart.x - (e.clientX - dragStart.x) / scale;
+          cameraY = camStart.y - (e.clientY - dragStart.y) / scale;
+          clampCamera();
+        }
+        
+      } else if (activePointers.size === 2) {
+        let pts = Array.from(activePointers.values());
+        let currentDist = Math.hypot(pts[0].clientX - pts[1].clientX, pts[0].clientY - pts[1].clientY);
+        
+        let newScale = initialScale * (currentDist / initialPinchDist);
+        newScale = Math.max(minScale, Math.min(newScale, 2.5)); 
+        
+        let oldWorldX = pinchCenter.x / scale + cameraX;
+        let oldWorldY = pinchCenter.y / scale + cameraY;
+        
+        scale = newScale;
+        cameraX = oldWorldX - pinchCenter.x / scale;
+        cameraY = oldWorldY - pinchCenter.y / scale;
+        
+        clampCamera();
+      }
+    });
+
+    const onPointerUp = (e) => {
+      activePointers.delete(e.pointerId);
+      
+      if (activePointers.size === 0) {
+        if (isPointerDown && !hasMoved) {
+          let clickWorldX = (e.clientX / scale) + cameraX;
+          let clickWorldY = (e.clientY / scale) + cameraY;
+          
+          clickWorldX = Math.max(0, Math.min(clickWorldX, MAP_WIDTH));
+          clickWorldY = Math.max(0, Math.min(clickWorldY, MAP_HEIGHT));
+
+          player.isFacingLeft = clickWorldX < player.x;
+          player.targetX = clickWorldX;
+          player.targetY = clickWorldY;
+          player.isMoving = true;
+        }
+        isPointerDown = false;
+        isDragActive = false;
+      } else if (activePointers.size === 1) {
+        let ptr = Array.from(activePointers.values())[0];
+        isPointerDown = true;
+        isDragActive = true; 
+        hasMoved = true; 
+        dragStart = { x: ptr.clientX, y: ptr.clientY };
+        camStart = { x: cameraX, y: cameraY };
+      }
+    };
+
+    canvas.addEventListener('pointerup', onPointerUp);
+    canvas.addEventListener('pointercancel', onPointerUp);
+    canvas.addEventListener('pointerout', onPointerUp);
+
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      let zoomFactor = e.deltaY > 0 ? 0.9 : 1.1; 
+      let newScale = Math.max(minScale, Math.min(scale * zoomFactor, 2.5));
+      
+      let mouseX = e.clientX;
+      let mouseY = e.clientY;
+      
+      let oldWorldX = mouseX / scale + cameraX;
+      let oldWorldY = mouseY / scale + cameraY;
+      
+      scale = newScale;
+      cameraX = oldWorldX - mouseX / scale;
+      cameraY = oldWorldY - mouseY / scale;
+      
+      clampCamera();
+    }, { passive: false });
 
     requestAnimationFrame(gameLoop);
   </script>

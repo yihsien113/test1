@@ -151,7 +151,7 @@
   <div id="game-container">
     <button id="back-btn" class="btn" onclick="window.location.href='index.html'">🔙 放棄並返回</button>
 
-    <div id="hud">⏳ <span id="timerDisplay">20.0</span> | ⚔️ <span id="killDisplay">0</span> | 🪙 <span id="coinDisplay">0</span></div>
+    <div id="hud">⏳ <span id="timerDisplay">20.0</span> | ⚔️ <span id="killDisplay">0</span> | ⭐ <span id="coinDisplay">0</span></div>
     
     <div id="start-screen" class="overlay" style="display: none;">
       <button class="btn" style="position: absolute; top: 15px; left: 15px; margin: 0; padding: 8px 16px; font-size: 18px; background-color: #333;" onclick="window.location.href='index.html'">🔙 返回大廳</button>
@@ -167,9 +167,9 @@
       
       <div class="math-box">
         ⚔️: <span id="finalKills">0</span> <br>
-        🪙: <span id="newCoins" style="color:#60ff40;">+0</span> <br>
+        ⭐: <span id="newCoins" style="color:#60ff40;">+0</span> <br>
         <hr style="border-color: rgba(255,255,255,0.2);">
-        總共存款: <span id="totalCoins" style="color:#ffeb3b; font-weight:bold; font-size: 32px;">0</span> 🪙
+        總共存款: <span id="totalCoins" style="color:#ffeb3b; font-weight:bold; font-size: 32px;">0</span> ⭐
       </div>
       
       <div id="star-container"></div>
@@ -194,6 +194,40 @@
           ctx.save(); ctx.strokeStyle = `rgba(255, 105, 180, ${1 - p})`; ctx.shadowColor = '#ff1493'; ctx.shadowBlur = 20; ctx.lineWidth = 8 * (1 - p);
           ctx.beginPath(); ctx.moveTo(startX, startY); ctx.lineTo(targetX, targetY); ctx.stroke();
           ctx.font = `${30 + p * 30}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.globalAlpha = 1 - p; ctx.fillText('💖', targetX, targetY - p * 20); ctx.restore();
+        }
+      },
+      'han3': {
+        name: '魔法仙子', prefix: 'han3', size: 160, hitboxOffsetX: 110, hitboxOffsetY: 0, hitboxRadius: 60,
+        drawEffect: (ctx, p, startX, startY, targetX, targetY) => {
+          ctx.save();
+          // 1. 巨大星星從天而降砸向怪物
+          const dropY = targetY - 200 * (1 - p); 
+          ctx.translate(targetX, dropY);
+          
+          ctx.rotate(p * Math.PI * 4); 
+          ctx.shadowColor = '#FFD700';
+          ctx.shadowBlur = 15 + p * 15;
+          ctx.globalAlpha = Math.min(1, p * 2.5); 
+          
+          ctx.font = `${60 + Math.sin(p * Math.PI) * 20}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('🌙', 0, 0);
+          
+          // 2. 砸中怪物時的星星爆散碎片
+          if (p > 0.7) {
+            const burstP = (p - 0.7) / 0.3; 
+            ctx.rotate(-p * Math.PI * 4); 
+            
+            for (let i = 0; i < 6; i++) {
+              const angle = (i * Math.PI * 2) / 6;
+              const dist = burstP * 80;
+              ctx.globalAlpha = 1 - burstP;
+              ctx.font = `${25 * (1 - burstP * 0.5)}px sans-serif`;
+              ctx.fillText('✨', Math.cos(angle) * dist, Math.sin(angle) * dist);
+            }
+          }
+          ctx.restore();
         }
       }
     };
@@ -381,7 +415,7 @@
       
       let killsHtml = '';
       for (let i = 1; i <= coins; i++) {
-        killsHtml += '🪙';
+        killsHtml += '⭐';
         if (i % 10 === 0) killsHtml += '<br>'; 
       }
       document.getElementById('star-container').innerHTML = killsHtml;
@@ -463,10 +497,9 @@
         let scale = 1;
         let rotation = 0;
 
-        if (timeAlive < 600) { // 搖晃動畫持續 600 毫秒 (0.6秒)
-            let p = timeAlive / 600; // 0 到 1 的進度
-            scale = Math.min(1, p * 1.5); // 從 0 快速放大到 1
-            // 產生左右搖晃效果 (sin波)，並隨著時間 (1-p) 逐漸減弱到停止
+        if (timeAlive < 600) { 
+            let p = timeAlive / 600; 
+            scale = Math.min(1, p * 1.5); 
             rotation = Math.sin(p * Math.PI * 6) * (1 - p) * 0.6; 
         }
 
@@ -557,7 +590,7 @@
               //掉落金幣機率
               if (Math.random() < 0.50) {
                   coins++;
-                  addPopup('🪙', monster.x, monster.y, '#FFD700', 40);
+                  addPopup('⭐', monster.x, monster.y, '#FFD700', 40);
               }
 
               updateHUD();
