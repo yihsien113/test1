@@ -3,8 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>詹粢涵娃娃屋尋寶</title>
+  <title>粢涵尋寶去 - 關卡1</title>
   
+  <!-- 引入外部注音模組 -->
+  <script src="bopomofo.js"></script>
+
   <style>
     * {
       box-sizing: border-box;
@@ -75,20 +78,33 @@
       align-items: center;
       justify-content: center;
       z-index: 1000;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .intro-copy {
+      width: 100%;
+      max-width: 720px;
+      padding: 14px 18px;
+      border-radius: 14px;
+      background-color: rgba(0, 0, 0, 0.8);
     }
     
     .btn {
       margin-top: 20px;
       padding: 12px 30px;
-      font-size: 20px;
+      font-size: 24px;
       font-weight: bold;
       color: #fff;
       background-color: #ff4081;
       border: none;
-      border-radius: 30px;
+      border-radius: 35px;
       cursor: pointer;
       box-shadow: 0 4px 15px rgba(255, 64, 129, 0.4);
       transition: transform 0.1s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
     .btn:active { transform: scale(0.95); }
 
@@ -132,48 +148,103 @@
     
     .math-box {
       background: rgba(43, 39, 39, 0.85);
-      padding: 15px;
+      padding: 15px 25px;
       border-radius: 10px;
       margin: 15px 0;
-      font-size: 30px;
+      font-size: 28px;
       text-align: center;
-      line-height: 1.6;
+      line-height: 1.8;
     }
   </style>
 </head>
 <body>
 
+  <!-- 進度條保持純文字，不加注音 -->
   <div id="loading-screen">
     <div class="spinner"></div>
     <div id="loading-text">娃娃屋載入中 (0/5)...</div>
   </div>
 
   <div id="game-container">
-    <button id="back-btn" class="btn" onclick="window.location.href='index.html'">🔙 放棄並返回</button>
+    <button id="back-btn" class="btn" onclick="window.location.href='index.html'">🔙 EXIT</button>
 
     <div id="hud">⏳ <span id="timerDisplay">20.0</span> | ⚔️ <span id="killDisplay">0</span> | ⭐ <span id="coinDisplay">0</span></div>
     
+    <!-- 開始畫面 -->
     <div id="start-screen" class="overlay" style="display: none;">
-      <button class="btn" style="position: absolute; top: 15px; left: 15px; margin: 0; padding: 8px 16px; font-size: 18px; background-color: #333;" onclick="window.location.href='index.html'">🔙 返回大廳</button>
+      <button class="btn" style="position: absolute; top: 15px; left: 15px; margin: 0; padding: 8px 16px; font-size: 18px; background-color: #333;" onclick="window.location.href='index.html'">🔙 EXIT</button>
       
-      <h1 style="font-size: 40px; margin-bottom: 10px; text-shadow: 0 4px 10px rgba(0,0,0,0.8);">娃娃屋討伐戰</h1>
-      <p style="font-size: 20px; margin: 0 0 30px 0; text-shadow: 0 2px 5px rgba(0,0,0,0.8);">打倒怪物賺取金幣，攻擊時鐘獲得時間！</p>
-      <button class="btn" style="font-size: 28px; padding: 15px 50px;" onclick="startGame()">開始遊戲</button>
+      <div class="intro-copy">
+        <!-- 標題：保護娃娃屋（提高 1.5 倍至 60px） -->
+        <h1 class="zh-text" style="display: block; font-size: 60px; margin: 0 0 28px; text-shadow: 0 4px 10px rgba(0,0,0,0.8); color: #fff;">
+          <ruby>保<rt>ㄅㄠˇ</rt></ruby>
+          <ruby>護<rt>ㄏㄨˋ</rt></ruby>
+          <ruby>娃<rt>ㄨㄚˊ</rt></ruby>
+          <ruby>娃<rt>ㄨㄚ</rt></ruby>
+          <ruby>屋<rt>ㄨ</rt></ruby>
+        </h1>
+
+        <!-- 副標題說明文字（提高 1.5 倍至 33px） -->
+        <p class="zh-text" style="display: block; font-size: 33px; margin: 0; text-shadow: 0 2px 5px rgba(0,0,0,0.8); max-width: 100%;">
+          <ruby>娃<rt>ㄨㄚˊ</rt></ruby>
+          <ruby>娃<rt>ㄨㄚ</rt></ruby>
+          <ruby>屋<rt>ㄨ</rt></ruby>
+          <ruby>被<rt>ㄅㄟˋ</rt></ruby>
+          <ruby>攻<rt>ㄍㄨㄥ</rt></ruby>
+          <ruby>擊<rt>ㄐㄧˊ</rt></ruby>
+          <ruby>了<rt>˙ㄌㄜ</rt></ruby>
+          <br>
+          <ruby>打<rt>ㄉㄚˇ</rt></ruby>
+          <ruby>敗<rt>ㄅㄞˋ</rt></ruby>
+          <ruby>怪<rt>ㄍㄨㄞˋ</rt></ruby>
+          <ruby>物<rt>ㄨˋ</rt></ruby>
+          <ruby>吧<rt>˙ㄅㄚ</rt></ruby>
+          <span>！</span>
+        </p>
+      </div>
+
+      <!-- 開始按鈕 -->
+      <button class="btn" style="font-size: 32px; padding: 15px 55px;" onclick="startGame()">
+        <ruby>開<rt>ㄎㄞ</rt></ruby>
+        <ruby>始<rt>ㄕˇ</rt></ruby>
+      </button>
     </div>
 
+    <!-- 結算畫面 -->
     <div id="result-screen" class="overlay" style="display: none;">
-      <button class="btn" style="position: absolute; top: 15px; left: 15px; margin: 0; padding: 8px 16px; font-size: 18px; background-color: #333;" onclick="window.location.href='index.html'">🔙 返回大廳</button>
-      <h1 style="font-size: 36px; color: #ffeb3b; margin: 0;">時間到！</h1>
+      <button class="btn" style="position: absolute; top: 15px; left: 15px; margin: 0; padding: 8px 16px; font-size: 18px; background-color: #333;" onclick="window.location.href='index.html'">🔙 EXIT</button>
+      
+      <!-- 標題：時間到！ -->
+      <h1 class="zh-text" style="font-size: 38px; color: #ffeb3b; margin: 0 0 10px 0;">
+        <ruby>時<rt>ㄕˊ</rt></ruby>
+        <ruby>間<rt>ㄐㄧㄢ</rt></ruby>
+        <ruby>到<rt>ㄉㄠˋ</rt></ruby>
+        <span>！</span>
+      </h1>
       
       <div class="math-box">
         ⚔️: <span id="finalKills">0</span> <br>
         ⭐: <span id="newCoins" style="color:#60ff40;">+0</span> <br>
-        <hr style="border-color: rgba(255,255,255,0.2);">
-        總共存款: <span id="totalCoins" style="color:#ffeb3b; font-weight:bold; font-size: 32px;">0</span> ⭐
+        <hr style="border-color: rgba(255,255,255,0.2); margin: 10px 0;">
+        <span class="zh-text" style="vertical-align: middle;">
+          <ruby>總<rt>ㄗㄨㄥˇ</rt></ruby>
+          <ruby>共<rt>ㄍㄨㄥˋ</rt></ruby>
+          <ruby>存<rt>ㄘㄨㄣˊ</rt></ruby>
+          <ruby>款<rt>ㄎㄨㄢˇ</rt></ruby>
+          <span>:</span>
+        </span>
+        <span id="totalCoins" style="color:#ffeb3b; font-weight:bold; font-size: 34px; margin-left: 8px;">0</span> ⭐
       </div>
       
       <div id="star-container"></div>
-      <button class="btn" onclick="startGame()">再戰一次</button>
+      
+      <!-- 再玩一次按鈕 -->
+      <button class="btn" style="font-size: 26px; padding: 12px 40px;" onclick="startGame()">
+        <ruby>再<rt>ㄗㄞˋ</rt></ruby>
+        <ruby>玩<rt>ㄨㄢˊ</rt></ruby>
+        <ruby>一<rt>ㄧ</rt></ruby>
+        <ruby>次<rt>ㄘˋ</rt></ruby>
+      </button>
     </div>
 
     <canvas id="gameCanvas"></canvas>
@@ -200,7 +271,6 @@
         name: '魔法仙子', prefix: 'han3', size: 160, hitboxOffsetX: 110, hitboxOffsetY: 0, hitboxRadius: 60,
         drawEffect: (ctx, p, startX, startY, targetX, targetY) => {
           ctx.save();
-          // 1. 巨大星星從天而降砸向怪物
           const dropY = targetY - 200 * (1 - p); 
           ctx.translate(targetX, dropY);
           
@@ -214,7 +284,6 @@
           ctx.textBaseline = 'middle';
           ctx.fillText('🌙', 0, 0);
           
-          // 2. 砸中怪物時的星星爆散碎片
           if (p > 0.7) {
             const burstP = (p - 0.7) / 0.3; 
             ctx.rotate(-p * Math.PI * 4); 
@@ -301,8 +370,6 @@
       clockItems.push({
           x: pos.x,
           y: pos.y,
-
-          //時鐘大小
           size: 80,
           spawnTime: performance.now()
       });
@@ -492,7 +559,6 @@
         ctx.save();
         ctx.translate(monster.x, monster.y);
         
-        // 怪物生成時的「左右搖晃」出場特效
         const timeAlive = now - monster.spawnTime;
         let scale = 1;
         let rotation = 0;
@@ -587,7 +653,6 @@
               monster.isVisible = false;
               kills++;
 
-              //掉落金幣機率
               if (Math.random() < 0.50) {
                   coins++;
                   addPopup('⭐', monster.x, monster.y, '#FFD700', 40);

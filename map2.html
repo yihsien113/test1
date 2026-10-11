@@ -3,8 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>廚房滅蟑大作戰</title>
+  <title>粢涵尋寶去 - 關卡2</title>
   
+  <!-- 引入外部注音模組 -->
+  <script src="bopomofo.js"></script>
+
   <style>
     * {
       box-sizing: border-box;
@@ -75,20 +78,33 @@
       align-items: center;
       justify-content: center;
       z-index: 1000;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .intro-copy {
+      width: 100%;
+      max-width: 720px;
+      padding: 14px 18px;
+      border-radius: 14px;
+      background-color: rgba(0, 0, 0, 0.8);
     }
     
     .btn {
       margin-top: 20px;
       padding: 12px 30px;
-      font-size: 20px;
+      font-size: 24px;
       font-weight: bold;
       color: #fff;
       background-color: #ff4081;
       border: none;
-      border-radius: 30px;
+      border-radius: 35px;
       cursor: pointer;
       box-shadow: 0 4px 15px rgba(255, 64, 129, 0.4);
       transition: transform 0.1s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
     .btn:active { transform: scale(0.95); }
 
@@ -132,61 +148,113 @@
     
     .math-box {
       background: rgba(43, 39, 39, 0.85);
-      padding: 15px;
+      padding: 15px 25px;
       border-radius: 10px;
       margin: 15px 0;
-      font-size: 30px;
+      font-size: 28px;
       text-align: center;
-      line-height: 1.6;
+      line-height: 1.8;
     }
   </style>
 </head>
 <body>
 
+  <!-- 進度條保持純文字，不加注音 -->
   <div id="loading-screen">
     <div class="spinner"></div>
     <div id="loading-text">廚房載入中 (0/5)...</div>
   </div>
 
   <div id="game-container">
-    <button id="back-btn" class="btn" onclick="window.location.href='index.html'">🔙 放棄並返回</button>
+    <button id="back-btn" class="btn" onclick="window.location.href='index.html'">🔙 EXIT</button>
 
     <div id="hud">⏳ <span id="timerDisplay">20.0</span> | ⚔️ <span id="killDisplay">0</span> | ⭐ <span id="coinDisplay">0</span></div>
     
+    <!-- 開始畫面 -->
     <div id="start-screen" class="overlay" style="display: none;">
-      <button class="btn" style="position: absolute; top: 15px; left: 15px; margin: 0; padding: 8px 16px; font-size: 18px; background-color: #333;" onclick="window.location.href='index.html'">🔙 返回大廳</button>
+      <button class="btn" style="position: absolute; top: 15px; left: 15px; margin: 0; padding: 8px 16px; font-size: 18px; background-color: #333;" onclick="window.location.href='index.html'">🔙 EXIT</button>
       
-      <h1 style="font-size: 40px; margin-bottom: 10px; text-shadow: 0 4px 10px rgba(0,0,0,0.8);">廚房滅蟑大作戰</h1>
-      <p style="font-size: 20px; margin: 0 0 30px 0; text-shadow: 0 2px 5px rgba(0,0,0,0.8);">打倒會亂跑的蟑螂，攻擊時鐘獲得時間！</p>
-      <button class="btn" style="font-size: 28px; padding: 15px 50px;" onclick="startGame()">開始遊戲</button>
+      <div class="intro-copy">
+        <!-- 標題：廚房滅蟑大作戰（提高 1.5 倍至 60px） -->
+        <h1 class="zh-text" style="display: block; font-size: 60px; margin: 0 0 28px; text-shadow: 0 4px 10px rgba(0,0,0,0.8); color: #fff;">
+          <ruby>消<rt>ㄒㄧㄠ</rt></ruby>
+          <ruby>滅<rt>ㄇㄧㄝˋ</rt></ruby>
+          <ruby>蟑<rt>ㄓㄤ</rt></ruby>
+          <ruby>螂<rt>ㄌㄤˊ</rt></ruby>
+          <br>
+          <ruby>大<rt>ㄉㄚˋ</rt></ruby>
+          <ruby>作<rt>ㄗㄨㄛˋ</rt></ruby>
+          <ruby>戰<rt>ㄓㄢˋ</rt></ruby>
+        </h1>
+
+        <!-- 副標題說明文字（提高 1.5 倍至 33px） -->
+        <p class="zh-text" style="display: block; font-size: 33px; margin: 0; text-shadow: 0 2px 5px rgba(0,0,0,0.8); max-width: 100%;">
+          <ruby>廚<rt>ㄔㄨˊ</rt></ruby>
+          <ruby>房<rt>ㄈㄤˊ</rt></ruby>
+          <ruby>出<rt>ㄔㄨ</rt></ruby>
+          <ruby>現<rt>ㄒㄧㄢˋ</rt></ruby>
+          <ruby>好<rt>ㄏㄠˇ</rt></ruby>
+          <ruby>多<rt>ㄉㄨㄛ</rt></ruby><br>
+          <ruby>亂<rt>ㄌㄨㄢˋ</rt></ruby>
+          <ruby>跑<rt>ㄆㄠˇ</rt></ruby>
+          <ruby>的<rt>˙ㄉㄜ</rt></ruby>
+          <ruby>蟑<rt>ㄓㄤ</rt></ruby>
+          <ruby>螂<rt>ㄌㄤˊ</rt></ruby>
+          <span>！</span>
+        </p>
+      </div>
+
+      <!-- 開始按鈕 -->
+      <button class="btn" style="font-size: 32px; padding: 15px 55px;" onclick="startGame()">
+        <ruby>開<rt>ㄎㄞ</rt></ruby>
+        <ruby>始<rt>ㄕˇ</rt></ruby>
+      </button>
     </div>
 
+    <!-- 結算畫面 -->
     <div id="result-screen" class="overlay" style="display: none;">
-      <button class="btn" style="position: absolute; top: 15px; left: 15px; margin: 0; padding: 8px 16px; font-size: 18px; background-color: #333;" onclick="window.location.href='index.html'">🔙 返回大廳</button>
-      <h1 style="font-size: 36px; color: #ffeb3b; margin: 0;">時間到！</h1>
+      <button class="btn" style="position: absolute; top: 15px; left: 15px; margin: 0; padding: 8px 16px; font-size: 18px; background-color: #333;" onclick="window.location.href='index.html'">🔙 EXIT</button>
+      
+      <!-- 標題：時間到！ -->
+      <h1 class="zh-text" style="font-size: 38px; color: #ffeb3b; margin: 0 0 10px 0;">
+        <ruby>時<rt>ㄕˊ</rt></ruby>
+        <ruby>間<rt>ㄐㄧㄢ</rt></ruby>
+        <ruby>到<rt>ㄉㄠˋ</rt></ruby>
+        <span>！</span>
+      </h1>
       
       <div class="math-box">
         ⚔️: <span id="finalKills">0</span> <br>
         ⭐: <span id="newCoins" style="color:#60ff40;">+0</span> <br>
-        <hr style="border-color: rgba(255,255,255,0.2);">
-        總共存款: <span id="totalCoins" style="color:#ffeb3b; font-weight:bold; font-size: 32px;">0</span> ⭐
+        <hr style="border-color: rgba(255,255,255,0.2); margin: 10px 0;">
+        <span class="zh-text" style="vertical-align: middle;">
+          <ruby>總<rt>ㄗㄨㄥˇ</rt></ruby>
+          <ruby>共<rt>ㄍㄨㄥˋ</rt></ruby>
+          <ruby>存<rt>ㄘㄨㄣˊ</rt></ruby>
+          <ruby>款<rt>ㄎㄨㄢˇ</rt></ruby>
+          <span>:</span>
+        </span>
+        <span id="totalCoins" style="color:#ffeb3b; font-weight:bold; font-size: 34px; margin-left: 8px;">0</span> ⭐
       </div>
       
       <div id="star-container"></div>
-      <button class="btn" onclick="startGame()">再戰一次</button>
+      
+      <!-- 再玩一次按鈕 -->
+      <button class="btn" style="font-size: 26px; padding: 12px 40px;" onclick="startGame()">
+        <ruby>再<rt>ㄗㄞˋ</rt></ruby>
+        <ruby>玩<rt>ㄨㄢˊ</rt></ruby>
+        <ruby>一<rt>ㄧ</rt></ruby>
+        <ruby>次<rt>ㄘˋ</rt></ruby>
+      </button>
     </div>
 
     <canvas id="gameCanvas"></canvas>
   </div>
 
   <script>
-    // ==========================================
-    // 遊戲參數設定區 (可搜尋修改)
-    // ==========================================
-    const ROACH_SIZE = 100;       // 蟑螂的大小
-    const ROACH_SPEED = 170;      // 蟑螂的移動速度 (數值越大跑越快)
-    const DROP_RATE = 0.65;       // 掉寶機率 (0.65 代表 65%)
-    // ==========================================
+    const ROACH_SIZE = 100;
+    const ROACH_SPEED = 170;
+    const DROP_RATE = 0.65;
 
     const CHARACTERS = {
       'han1': {
@@ -257,7 +325,6 @@
       hitboxOffsetX: charConfig.hitboxOffsetX, hitboxOffsetY: charConfig.hitboxOffsetY, hitboxRadius: charConfig.hitboxRadius     
     };
 
-    // 蟑螂物件設定
     const monster = {
       x: 0, y: 0, 
       targetX: 0, targetY: 0,
@@ -268,47 +335,92 @@
       walkCycle: 0
     };
 
-    // 隨機取得地板範圍座標 (廚房場景的下半部)
+    const recentMonsterSpawns = [];
+
     function getRandomZonePoint() {
       const margin = ROACH_SIZE;
       const rx = margin + Math.random() * (canvas.width - margin * 2);
-      // 設定只在畫面 40% ~ 95% 的高度(即地板範圍)內出現
       const ry = canvas.height * 0.4 + Math.random() * (canvas.height * 0.55 - margin);
       return { x: rx, y: ry };
     }
 
+    function getInitialRoachTarget() {
+      const towardPlayerX = player.x - monster.x;
+      const towardPlayerY = player.y - monster.y;
+      const playerDistance = Math.hypot(towardPlayerX, towardPlayerY);
+      const margin = ROACH_SIZE;
+      const minY = canvas.height * 0.4;
+      const maxY = canvas.height * 0.95 - margin;
+
+      if (playerDistance === 0) return getRandomZonePoint();
+
+      for (let i = 0; i < 100; i++) {
+        const target = getRandomZonePoint();
+        const dx = target.x - monster.x;
+        const dy = target.y - monster.y;
+        const distance = Math.hypot(dx, dy);
+        if (distance === 0) continue;
+
+        const alignment = (dx * towardPlayerX + dy * towardPlayerY) / (distance * playerDistance);
+        if (alignment <= 0) return target;
+      }
+
+      const corners = [
+        { x: margin, y: minY },
+        { x: canvas.width - margin, y: minY },
+        { x: margin, y: maxY },
+        { x: canvas.width - margin, y: maxY }
+      ];
+      for (const target of corners) {
+        const dx = target.x - monster.x;
+        const dy = target.y - monster.y;
+        const distance = Math.hypot(dx, dy);
+        if (distance === 0) continue;
+
+        const alignment = (dx * towardPlayerX + dy * towardPlayerY) / (distance * playerDistance);
+        if (alignment <= 0) return target;
+      }
+
+      return null;
+    }
+
     function spawnMonster() {
-      const pos = getRandomZonePoint();
-      monster.x = pos.x;
-      monster.y = pos.y;
-      
-      // 確保初始移動方向不往人偶去
-      let angleToPlayer = Math.atan2(player.y - monster.y, player.x - monster.x);
-      let foundValidTarget = false;
-      
-      for (let i = 0; i < 15; i++) {
-          const nextTarget = getRandomZonePoint();
-          let angleToTarget = Math.atan2(nextTarget.y - monster.y, nextTarget.x - monster.x);
-          
-          // 計算夾角差值
-          let diff = Math.abs(angleToTarget - angleToPlayer);
-          if (diff > Math.PI) diff = 2 * Math.PI - diff;
-          
-          // 若夾角大於 90 度 (Math.PI / 2)，代表是遠離或背對人偶的方向
-          if (diff > Math.PI / 2) {
-              monster.targetX = nextTarget.x;
-              monster.targetY = nextTarget.y;
-              foundValidTarget = true;
-              break;
-          }
+      const candidates = [];
+      for (let i = 0; i < 200; i++) {
+        const pos = getRandomZonePoint();
+        monster.x = pos.x;
+        monster.y = pos.y;
+        const target = getInitialRoachTarget() || {
+          x: player.x < pos.x ? canvas.width - ROACH_SIZE : ROACH_SIZE,
+          y: pos.y
+        };
+
+        const playerDistance = Math.hypot(player.x - pos.x, player.y - pos.y);
+        const nearestRecentDistance = recentMonsterSpawns.length
+          ? Math.min(...recentMonsterSpawns.map(spawn => Math.hypot(spawn.x - pos.x, spawn.y - pos.y)))
+          : Infinity;
+        candidates.push({ ...pos, target, playerDistance, nearestRecentDistance });
       }
-      
-      // 防呆：極端情況下找不到合適點，則隨機給予
-      if (!foundValidTarget) {
-          const fallback = getRandomZonePoint();
-          monster.targetX = fallback.x;
-          monster.targetY = fallback.y;
-      }
+
+      const minPlayerDistance = Math.max(ROACH_SIZE * 2.2, player.size * 1.25);
+      const minRecentDistance = Math.max(ROACH_SIZE * 3, canvas.width * 0.18);
+      const safeCandidates = candidates.filter(candidate => candidate.playerDistance >= minPlayerDistance);
+      const variedCandidates = safeCandidates.filter(candidate => candidate.nearestRecentDistance >= minRecentDistance);
+      const eligibleCandidates = variedCandidates.length ? variedCandidates : safeCandidates;
+      const selected = eligibleCandidates.length
+        ? eligibleCandidates[Math.floor(Math.random() * eligibleCandidates.length)]
+        : candidates.reduce((farthest, candidate) => (
+            !farthest || candidate.playerDistance > farthest.playerDistance ? candidate : farthest
+          ), null);
+
+      const spawn = selected || getRandomZonePoint();
+
+      monster.x = spawn.x;
+      monster.y = spawn.y;
+      monster.targetX = spawn.target ? spawn.target.x : (player.x < spawn.x ? canvas.width - ROACH_SIZE : ROACH_SIZE);
+      monster.targetY = spawn.target ? spawn.target.y : spawn.y;
+      recentMonsterSpawns.push({ x: monster.x, y: monster.y });
+      if (recentMonsterSpawns.length > 4) recentMonsterSpawns.shift();
       
       monster.isVisible = true;
       monster.spawnTime = performance.now(); 
@@ -352,7 +464,6 @@
       }
     }
 
-    // 載入廚房底圖 (map2.webp)
     const bgImg = new Image();
     bgImg.src = 'assets/map/map2.webp'; 
     bgImg.onload = () => {
@@ -366,7 +477,6 @@
       checkLoadProgress();
     };
 
-    // 載入角色圖片
     const playerImages = [];
     [1, 2, 3].forEach((num, idx) => {
       const img = new Image();
@@ -375,7 +485,6 @@
       playerImages[idx] = img;
     });
 
-    // 載入蟑螂素材 (bad2.webp)
     const roachImg = new Image();
     roachImg.src = 'assets/bad/bad2.webp';
     roachImg.onload = () => checkLoadProgress();
@@ -385,6 +494,7 @@
       coins = 0;
       timeLeft = 20.0;
       isPlaying = true;
+      recentMonsterSpawns.length = 0;
       activeEffects = [];
       clockItems = [];
       popupTexts = [];
@@ -463,7 +573,6 @@
               clockSpawnTimer = 0;
           }
 
-          // 蟑螂亂跑邏輯
           if (monster.isVisible) {
               let dx = monster.targetX - monster.x;
               let dy = monster.targetY - monster.y;
@@ -473,9 +582,8 @@
               if (distance > moveDist) {
                   monster.x += (dx / distance) * moveDist;
                   monster.y += (dy / distance) * moveDist;
-                  monster.walkCycle += 25 * dt; // 控制蟑螂走路搖晃的速度
+                  monster.walkCycle += 25 * dt; 
               } else {
-                  // 到達目標後，重新選定一個隨機點繼續跑
                   const nextTarget = getRandomZonePoint();
                   monster.targetX = nextTarget.x;
                   monster.targetY = nextTarget.y;
@@ -483,7 +591,6 @@
           }
       }
 
-      // 人偶移動邏輯
       if (!player.isAttacking) {
         let dx = player.targetX - player.x;
         let dy = player.targetY - player.y;
@@ -523,28 +630,20 @@
           ctx.restore();
       }
 
-      // 繪製會亂跑的蟑螂
       if (monster.isVisible && roachImg.complete) {
         ctx.save();
         ctx.translate(monster.x, monster.y);
         
-        // 蟑螂走路時的搖晃特效
-        let roachRotation = Math.sin(monster.walkCycle) * 0.3; // 左右搖晃角度
-        let roachScaleY = 1 + Math.abs(Math.sin(monster.walkCycle * 2)) * 0.1; // 身體微縮放
-        let isRoachFacingLeft = (monster.targetX < monster.x); // 判斷面朝哪邊
+        const movementAngle = Math.atan2(monster.targetY - monster.y, monster.targetX - monster.x);
+        const roachScaleY = 1 + Math.abs(Math.sin(monster.walkCycle * 2)) * 0.1;
 
-        ctx.rotate(roachRotation);
-        if (isRoachFacingLeft) {
-            ctx.scale(-1, roachScaleY);
-        } else {
-            ctx.scale(1, roachScaleY);
-        }
+        ctx.rotate(movementAngle + Math.PI / 2);
+        ctx.scale(1, roachScaleY);
 
         ctx.drawImage(roachImg, -monster.size / 2, -monster.size / 2, monster.size, monster.size);
         ctx.restore();
       }
 
-      // 繪製人偶
       ctx.save(); 
       let offsetY = player.isMoving ? Math.sin(player.walkCycle * 2) * 6 : 0;         
       let rotationAngle = player.isMoving ? Math.sin(player.walkCycle) * 0.20 : 0;   
@@ -618,23 +717,20 @@
         });
         
         if (isPlaying) {
-            // 殺死蟑螂判定
             const distToMonster = Math.sqrt(Math.pow(attackCenterX - monster.x, 2) + Math.pow(attackCenterY - monster.y, 2));
             if (monster.isVisible && distToMonster <= (attackRadius + monster.size / 2)) {
               monster.isVisible = false;
               kills++;
 
-              // 掉寶機率判定區
               if (Math.random() < DROP_RATE) {
                   coins++;
                   addPopup('⭐', monster.x, monster.y, '#FFD700', 40);
               }
 
               updateHUD();
-              spawnMonster(); // 立刻生成下一隻蟑螂
+              spawnMonster(); 
             }
 
-            // 吃時鐘判定
             for (let i = clockItems.length - 1; i >= 0; i--) {
                 let clock = clockItems[i];
                 let distToClock = Math.sqrt(Math.pow(attackCenterX - clock.x, 2) + Math.pow(attackCenterY - clock.y, 2));
