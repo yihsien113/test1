@@ -8,7 +8,7 @@
   <title>娃娃屋 - 大廳</title>
   <style>
     * { box-sizing: border-box; user-select: none; touch-action: none; }
-    body { margin: 0; overflow: hidden; background-color: #000; /* 背景改全黑 */ }
+    body { margin: 0; overflow: hidden; background-color: #000; }
     canvas { display: block; width: 100vw; height: 100vh; }
     
     #hud {
@@ -20,9 +20,68 @@
   </style>
 </head>
 <body>
+  <!-- 1. 新增：進度條畫面 -->
+  <div id="preloader" style="position:fixed;inset:0;background:#1a1a1a;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;font-family:sans-serif;color:#fff;">
+    <div style="font-size:22px;margin-bottom:20px;font-weight:bold;">遊戲素材載入中...</div>
+    <div style="width:280px;height:18px;background:#333;border-radius:9px;overflow:hidden;border:2px solid #555;">
+      <div id="progress-bar" style="width:0%;height:100%;background:#4caf50;transition:width 0.1s ease;"></div>
+    </div>
+    <div id="progress-text" style="margin-top:12px;font-size:16px;color:#bbb;">0%</div>
+  </div>
+
   <div id="hud">存款: <span id="coinDisplay">0</span> ⭐</div>
   <canvas id="lobbyCanvas"></canvas>
 
+  <!-- 2. 新增：引入清單並執行預載與 SW 註冊 -->
+  <script src="assets-manifest.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js')
+        .then(() => console.log('Service Worker 註冊成功'))
+        .catch((err) => console.warn('Service Worker 註冊失敗:', err));
+    }
+
+    async function runPreloader() {
+      const bar = document.getElementById('progress-bar');
+      const text = document.getElementById('progress-text');
+      const preloader = document.getElementById('preloader');
+
+      const cacheName = typeof CACHE_NAME !== 'undefined' ? CACHE_NAME : GAME_CACHE_NAME;
+      const cache = await caches.open(cacheName);
+      
+      let loadedCount = 0;
+      const total = GAME_ASSETS.length;
+
+      await Promise.all(GAME_ASSETS.map(async (url) => {
+        try {
+          const match = await cache.match(url);
+          if (!match) {
+            const res = await fetch(url);
+            if (res.ok) await cache.put(url, res);
+          }
+        } catch (err) {
+          console.warn('預載失敗:', url);
+        } finally {
+          loadedCount++;
+          const percent = Math.round((loadedCount / total) * 100);
+          if (bar) bar.style.width = percent + '%';
+          if (text) text.innerText = percent + '%';
+        }
+      }));
+
+      setTimeout(() => {
+        if (preloader) {
+          preloader.style.transition = 'opacity 0.5s ease';
+          preloader.style.opacity = '0';
+          setTimeout(() => preloader.remove(), 500);
+        }
+      }, 200);
+    }
+
+    window.addEventListener('DOMContentLoaded', runPreloader);
+  </script>
+
+  <!-- 原本的大廳遊戲邏輯保持不變 -->
   <script>
     const canvas = document.getElementById('lobbyCanvas');
     const ctx = canvas.getContext('2d');
@@ -68,7 +127,6 @@
     document.getElementById('coinDisplay').innerText = localStorage.getItem('playerCoins') || '0';
     let equippedCharKey = localStorage.getItem('equippedCharacter') || 'han1';
     
-    // --- 1. 在這裡載入大廳底圖 ---
     const bgImg = new Image();
     bgImg.src = 'assets/lobby/lobby.webp';
 
@@ -83,6 +141,7 @@
     };
 
     resize();
+    scale = minScale;
     cameraX = player.x - (canvas.width / scale) / 2;
     cameraY = player.y - (canvas.height / scale) / 2;
     clampCamera();
@@ -145,25 +204,14 @@
       ctx.scale(scale, scale);
       ctx.translate(-cameraX, -cameraY);
 
-      // --- 2. 在所有東西的最底層畫上背景圖 ---
       if (bgImg.complete) {
         ctx.drawImage(bgImg, 0, 0, MAP_WIDTH, MAP_HEIGHT);
       } else {
-        // 圖片還沒載入好的過渡底色
         ctx.fillStyle = '#222';
         ctx.fillRect(0, 0, MAP_WIDTH, MAP_HEIGHT);
       }
 
-      // (註解掉格線) 有底圖後就不需要黑底格線了
-      /* 
-      ctx.strokeStyle = '#333';
-      ctx.lineWidth = 1;
-      for(let i=0; i<=MAP_WIDTH; i+=100) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,MAP_HEIGHT); ctx.stroke(); }
-      for(let i=0; i<=MAP_HEIGHT; i+=100) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(MAP_WIDTH,i); ctx.stroke(); }
-      */
-
       for (let z of zones) {
-        // 彩虹旋轉傳送門邊框
         ctx.save();
         let cx = z.x + z.w / 2; 
         let cy = z.y + z.h / 2; 
@@ -199,7 +247,6 @@
         }
       }
 
-      // 畫玩家
       ctx.save();
       let offsetY = player.isMoving ? Math.sin(player.walkCycle * 2) * 5 : 0;
       let rotationAngle = player.isMoving ? Math.sin(player.walkCycle) * 0.15 : 0;
